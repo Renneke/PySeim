@@ -1,0 +1,25 @@
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "pysim"
+version = "0.1.0"
+description = "Waveform viewer and analyzer for ngspice/kicad"
+authors = ["Florian Renneke <florian.renneke@gmail.com>"]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pyqt5 = "*"
+ltspice = "*"
+
+[tool.poetry.scripts]
+pysim = "pysim.main:main"
+
+
+[tool.black]
+line-length = 120
+
+

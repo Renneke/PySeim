@@ -1,0 +1,29 @@
+.title KiCad schematic
+.include "/Users/rennekef/Documents/projects/2024/grid_tie/attiny13.sub"
+.model __D1 D
+.model __Q1 VDMOS NCHAN
++           vto=3.9
++           kp=165
++           rd=2m
+.probe alli
+.control
+	save all
+    tran 100n 1m uic
+    run
+    write
+.endc
+
+XU1 /pb5 /pb3 /pb4 0 /PB0 /pb1 /pb2 /VDD python_wrapper
+VJ2 /vin 0 DC 5 
+VJ1 /VDD 0 DC 10 
+R4 0 /pb2 1k
+R5 0 /pb1 1k
+R2 0 /pb4 1k
+R1 0 /pb5 1k
+R3 0 /pb3 1k
+R7 /PB0 /driver_gate 1k
+R6 0 /sense_i 0.1
+D1 /nmos_drain /vin __D1
+L1 /nmos_drain /vin 20u
+MQ1 /nmos_drain /driver_gate /sense_i __Q1
+.end
