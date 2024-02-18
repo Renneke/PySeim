@@ -3,21 +3,27 @@ import os
 import sys
 
 import ltspice
+from PyQt5.QtCore import pyqtRemoveInputHook
+
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
     NavigationToolbar2QT as NavigationToolbar
-from PyQt5 import QtCore
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (QAction, QApplication, QDialog, QDockWidget,
-                             QFileDialog, QHBoxLayout, QLabel, QLineEdit,
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtCore import QSettings, Qt, QMimeData
+
+from PyQt5.QtGui import QIcon, QDrag
+from PyQt5.QtWidgets import (QAction, QApplication, QDialog, QDockWidget,QAbstractItemView,
+                             QFileDialog, QHBoxLayout, QListWidgetItem, QLabel, QLineEdit,
                              QListWidget, QMainWindow, QMenu, QPushButton,
                              QVBoxLayout, QWidget)
 
 icon_refresh = os.path.join(os.path.dirname(__file__), "refresh.png")
 icon_show = os.path.join(os.path.dirname(__file__), "show.png")
+icon = os.path.join(os.path.dirname(__file__), 'icon', 'icon.icns')
+
 __version__ = "0.1.0"
 settings = QSettings(os.path.expanduser("~/.pysim.ini"), QSettings.IniFormat)
 
@@ -32,6 +38,47 @@ def get_settings():
 
     return kicad_path, ngspice_path
 
+
+class MyEquationField(QLineEdit):
+    def __init__(self, parent):
+        super(MyEquationField, self).__init__(parent)
+
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat("text/plain"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        text = event.mimeData().text()
+
+        # Set the drop action to MoveAction
+        event.setDropAction(Qt.MoveAction)
+
+        # Get the cursor position
+        cursor_position = self.cursorPosition()
+
+        # Insert the text at the cursor position
+        current_text = self.text()
+        new_text = current_text[:cursor_position] + text + current_text[cursor_position:]
+        self.setText(new_text)
+
+
+class DraggableListWidget(QListWidget):
+    def __init__(self, parent=None):
+        super(DraggableListWidget, self).__init__(parent)
+
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QAbstractItemView.DragOnly)
+
+    def startDrag(self, supportedActions):
+        item = self.currentItem()
+        mime_data = QMimeData()
+        mime_data.setText(item.text())
+
+        drag = QDrag(self)
+        drag.setMimeData(mime_data)
+        drag.exec_(Qt.MoveAction)
 
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
@@ -141,7 +188,11 @@ class MyWindow(QMainWindow):
         for sig in self.l.variables:
             if sig == "time":
                 continue
-            self.list_widget.addItem(sig)
+            item = QListWidgetItem(sig)
+            item.setFlags(item.flags() | Qt.ItemIsDragEnabled)
+            self.list_widget.addItem(item)
+
+        self.list_widget.setDragDropMode(QAbstractItemView.InternalMove)
 
         self.updateCanvas()
 
@@ -176,10 +227,11 @@ class MyWindow(QMainWindow):
         input_layout = QHBoxLayout()
 
         # Create a QListWidget on the left side
-        self.list_widget = QListWidget(self)
+        self.list_widget = DraggableListWidget(self)
 
         # Connect double-click event to custom slot
         self.list_widget.itemDoubleClicked.connect(self.handleItemDoubleClick)
+        self.list_widget.itemClicked.connect(self.on_item_clicked)
 
         # Connect right-click event to custom slot
         self.list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -190,6 +242,7 @@ class MyWindow(QMainWindow):
         # Create a Matplotlib figure and canvas
         center_layout = QVBoxLayout()
         self.fig, self.ax = plt.subplots()
+
 
         # Shrink current axis by 20%
         box = self.ax.get_position()
@@ -208,7 +261,8 @@ class MyWindow(QMainWindow):
         self.setCentralWidget(main_central_widget)
 
         # Create a QLineEdit and QPushButton for adding new items
-        self.add_item_textbox = QLineEdit(self)
+        self.add_item_textbox = MyEquationField(self)
+
         add_button = QPushButton("Add", self)
         add_button.clicked.connect(self.addItemToList)
 
@@ -233,6 +287,9 @@ class MyWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 400)
 
         self.update_title()
+
+    def on_item_clicked(self, item):
+        self.add_item_textbox.setText(item.text())
 
     def showDialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Open file", "", "KiCad Files (*.kicad_sch);;All Files (*)")
@@ -288,13 +345,56 @@ class MyWindow(QMainWindow):
             self.list_widget.addItem(new_item_text)
             self.add_item_textbox.clear()
 
+    def add_plot_for(self, time, data, label:str):
+        self.ax.plot(time, data, label=label)
+        self.ax.xaxis.set_major_formatter(FuncFormatter(self.format_xaxis_time))
+
+    def format_xaxis_time(self, value, _):
+        """
+        Custom formatter function for x-axis labels based on time range.
+        """
+        if value >= 1e3:
+            return f'{value / 1e3:.1f} s'
+        elif value >= 1e-3:
+            return f'{value / 1e-3:.1f} ms'
+        elif value >= 1e-6:
+            return f'{value / 1e-6:.1f} µs'
+        else:
+            return f'{value / 1e-9:.1f} ns'
+
+    def encode(self, item_text):
+        for i, var in enumerate(self.l.variables):
+            item_text = item_text.replace(var, f"var_{i}")
+        return item_text
+
+    def apply_equation(self, equation):
+
+        data = {}
+        for i, var in enumerate(self.l.variables):
+            data[f"var_{i}"] = self.l.get_data(var)
+
+        output = []
+        for i, _ in enumerate(self.time):
+            data_for_t = {v: data[i] for v, data in data.items()}
+            output.append(eval(equation, data_for_t))
+        return output
+
+
+
+    def get_data(self, item_text:str):
+        answ = self.l.get_data(item_text)
+        if answ is None:
+            equation = self.encode(item_text)
+            return self.apply_equation(equation)
+        return answ
+
     def updateCanvas(self):
 
         self.ax.clear()
 
         # Update the Matplotlib diagram based on the selected item
         for item_text in self.current_display:
-            self.ax.plot(self.time, self.l.get_data(item_text), label=item_text)
+            self.add_plot_for(self.time, self.get_data(item_text), label=item_text)
 
         self.ax.grid(True)
 
@@ -309,7 +409,7 @@ class MyWindow(QMainWindow):
         self.current_display.append(item_text)
 
         self.ax.grid(True)
-        self.ax.plot(self.time, self.l.get_data(item_text), label=item_text)
+        self.add_plot_for(self.time, self.get_data(item_text), label=item_text)
 
         # Put a legend to the right of the current axis
         self.ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
@@ -320,11 +420,15 @@ class MyWindow(QMainWindow):
 
 def main(argv=sys.argv):
 
+
     parser = argparse.ArgumentParser(description="PySim")
     parser.add_argument("file_path", nargs="?", default=None, help="Path to a *.kicad_sch file")
     args = parser.parse_args(argv[1:])
 
     app = QApplication(argv)
+    pyqtRemoveInputHook()
+
+    app.setWindowIcon(QIcon(icon))
     window = MyWindow(args.file_path)
     window.show()
     return app.exec_()
