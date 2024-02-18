@@ -10,6 +10,7 @@ description = "Waveform viewer and analyzer for ngspice/kicad"
 authors = ["Florian Renneke <florian.renneke@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/Renneke/PySeim"
 
 [tool.poetry.dependencies]
 python = "^3.9"
