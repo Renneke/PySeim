@@ -15,6 +15,14 @@ Make sure to include something like the following in your ngspice control sectio
 ```
 When running ngspice it should create a `rawspice.raw` file
 
+# How to use?
+
+PySim is available on pypi:
+``` bash
+pip install pysim
+pysim --help
+```
+
 # Features
 
 - Netlist, simulate and show results with just one click
