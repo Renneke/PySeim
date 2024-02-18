@@ -25,7 +25,7 @@ icon_show = os.path.join(os.path.dirname(__file__), "show.png")
 icon = os.path.join(os.path.dirname(__file__), 'icon', 'icon.icns')
 
 __version__ = "0.1.0"
-settings = QSettings(os.path.expanduser("~/.pysim.ini"), QSettings.IniFormat)
+settings = QSettings(os.path.expanduser("~/.pyseim.ini"), QSettings.IniFormat)
 
 
 def get_settings():
@@ -303,7 +303,7 @@ class MyWindow(QMainWindow):
             self.ax.clear()
 
     def update_title(self):
-        self.setWindowTitle(f"PySim {__version__} - {self.file_path}")
+        self.setWindowTitle(f"PySeim {__version__} - {self.file_path}")
 
     def showSettingsDialog(self):
         settings_dialog = SettingsDialog(self)
@@ -421,7 +421,7 @@ class MyWindow(QMainWindow):
 def main(argv=sys.argv):
 
 
-    parser = argparse.ArgumentParser(description="PySim")
+    parser = argparse.ArgumentParser(description="pyseim")
     parser.add_argument("file_path", nargs="?", default=None, help="Path to a *.kicad_sch file")
     args = parser.parse_args(argv[1:])
 

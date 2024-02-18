@@ -1,5 +1,5 @@
-# PySim
-PySim is an open source waveform viewer.
+# PyS(e)im
+PyS(e)im is an open source waveform viewer.
 It is meant to play together with ngspice and kicad. With just one click you can netlist, simulate and show the simulation results in a window:
 ![Example](doc/example.png)
 
@@ -15,12 +15,14 @@ Make sure to include something like the following in your ngspice control sectio
 ```
 When running ngspice it should create a `rawspice.raw` file
 
+
+
 # How to use?
 
-PySim is available on pypi:
+PyS(e)im is available on pypi:
 ``` bash
-pip install py-sim
-pysim --help
+pip install pyseim
+pyseim --help
 ```
 
 # Features
@@ -45,6 +47,10 @@ It is a very simple script (currently just one file). However, I find it already
 # Contribute
 
 Feel free to contribute.
+
+# Fun Fact
+The package name is close to PySim that was already taken. PyS(e)im is a close match. Seim means 'viscous juice'. Therefore, the icon is a honeycomb.
+![Example](pyseim/icon/icon.png)
 
 # Credits
 
