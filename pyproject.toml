@@ -4,7 +4,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "pysim"
+name = "py-sim"
 version = "0.1.0"
 description = "Waveform viewer and analyzer for ngspice/kicad"
 authors = ["Florian Renneke <florian.renneke@gmail.com>"]

@@ -19,7 +19,7 @@ When running ngspice it should create a `rawspice.raw` file
 
 PySim is available on pypi:
 ``` bash
-pip install pysim
+pip install py-sim
 pysim --help
 ```
 
