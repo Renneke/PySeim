@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pyseim"
-version = "0.1.0"
+version = "0.1.1"
 description = "Waveform viewer and analyzer for ngspice/kicad"
 authors = ["Florian Renneke <florian.renneke@gmail.com>"]
 license = "Apache-2.0"

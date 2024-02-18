@@ -24,7 +24,7 @@ icon_refresh = os.path.join(os.path.dirname(__file__), "refresh.png")
 icon_show = os.path.join(os.path.dirname(__file__), "show.png")
 icon = os.path.join(os.path.dirname(__file__), 'icon', 'icon.icns')
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 settings = QSettings(os.path.expanduser("~/.pyseim.ini"), QSettings.IniFormat)
 
 
